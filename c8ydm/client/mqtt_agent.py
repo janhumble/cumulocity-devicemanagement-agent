@@ -244,6 +244,9 @@ class Agent():
             init_thread.start()
             #_thread.start_new_thread(self.handle_initializer_message, (currentInitializer,))
 
+        checkGeoposThread = threading.Thread(target=self.check_report_geopos, args=(self.configuration,), daemon=True)
+        #checkGeoposThread.start()
+
         classCache = None
 
         # set supported operations
@@ -282,7 +285,25 @@ class Agent():
         ops = self.rest_client.get_all_dangling_operations(internald_id)
         self.rest_client.set_operations_to_failed(ops)
 
-
+    def check_report_geopos(self, configuration):
+    
+        latitude = configuration.getValue('agent','device.pos.latitude')
+        longitude = configuration.getValue('agent','device.pos.longitude')
+        self.logger.info('Getting geopos: ' + latitude + ',' + longitude)
+        if latitude is not None and longitude is not None:
+            pos_msg = SmartRESTMessage('s/us', '402', [latitude, longitude])
+            self.publishMessage(pos_msg)
+        else:
+            """ Retrieves GEO-Data """
+            try:
+                geo_data = requests.get(f'https://ipapi.co/json/').json()
+                self.logger.debug(f'Geo-Data: {geo_data}')
+                if geo_data and geo_data['latitude'] is not None and geo_data['longitude'] is not None:
+                    pos_msg = SmartRESTMessage('s/us', self.pos_message_id, [geo_data['latitude'], geo_data['longitude']])
+                    self.publishMessage(pos_msg)
+            except Exception as ex:
+                self.logger.error(f'Error retrieving Geodata: {ex}')
+                
     def __on_connect(self, client, userdata, flags, rc):
         try:
             self.logger.info('Agent connected with result code: ' + str(rc))

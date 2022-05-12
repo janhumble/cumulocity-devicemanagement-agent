@@ -48,10 +48,14 @@ class Network(Initializer):
                     break
             enabled = 1
             net_msg = SmartRESTMessage('s/uc/'+self.xid, self.net_message_id, [self.serial, ip, netmask, name, enabled, mac])
+            '''
             geo_data = self.get_geo_data()
             if geo_data and geo_data['latitude'] is not None and geo_data['longitude'] is not None:
                 pos_msg = SmartRESTMessage('s/us', self.pos_message_id, [geo_data['latitude'], geo_data['longitude']])
-            return [net_msg, pos_msg]
+            #return [net_msg, pos_msg]
+            
+            '''
+            return [net_msg]
         except Exception as ex:
             self.logger.error(f'Error on retrieving Network Details: {ex}')
             return None
